@@ -1,49 +1,42 @@
 use std::{fs::File, io::Write};
 
 fn main() {
-    let starting_value: usize = 10000000;
-
+    let starting_value = 10000;
     let grid_size: usize = (starting_value as f64).sqrt() as usize + 1;
-
-    let mut grid = vec![vec![0usize; grid_size]; grid_size];
     let center = grid_size / 2;
-
     let mut range = 0;
 
+    let mut grid = vec![vec![0usize; grid_size]; grid_size];
     grid[center][center] = starting_value;
 
-    // let mut frame_counter = 0;
+    loop {
+        let mut changed = false;
+        for row in center - range..=center + range {
+            for col in center - range..=center + range {
+                if grid[row][col] > 3 {
+                    changed = true;
+                    let overflow = grid[row][col] / 4;
+                    grid[row][col] %= 4;
 
-    // for frame in 0..starting_value {
-        // grid[center][center] += 1;
-        loop {
-            let mut changed = false;
-            for row in center - range..=center + range {
-                for col in center - range..=center + range {
-                    if grid[row][col] > 3 {
-                        changed = true;
-                        let overflow = grid[row][col] / 4;
-                        grid[row][col] %= 4;
+                    grid[row][col - 1] += overflow;
+                    grid[row][col + 1] += overflow;
+                    grid[row - 1][col] += overflow;
+                    grid[row + 1][col] += overflow;
 
-                        grid[row][col - 1] += overflow;
-                        grid[row][col + 1] += overflow;
-                        grid[row - 1][col] += overflow;
-                        grid[row + 1][col] += overflow;
-
-                        if row == center - range || row == center + range {
-                            range += 1;
-                        }
+                    if row == center - range || row == center + range {
+                        range += 1;
                     }
                 }
             }
-            if !changed {
-                break;
-            }
-            // frame_counter += 1;
         }
-        create_ppm(format!("./output/piles-{}.ppm", starting_value), &grid);
-    // }
+        if !changed {
+            break;
+        }
+    }
+    create_ppm(format!("./output/piles-{}.ppm", starting_value), &grid);
 }
+
+
 
 fn create_ppm(filename: String, grid: &Vec<Vec<usize>>) {
     let grid_size = grid.len();
@@ -52,7 +45,7 @@ fn create_ppm(filename: String, grid: &Vec<Vec<usize>>) {
 
     let mut offset = 0;
 
-    for row in grid {
+    for row in grid.iter() {
         for item in row {
             // let mut rgb_shade = 0;
             match item {
